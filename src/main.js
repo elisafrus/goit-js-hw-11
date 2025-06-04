@@ -1,59 +1,48 @@
+import { getImagesByQuery } from './js/pixabay-api.js';
+import { createGallery, clearGallery, showLoader, hideLoader } from './js/render-functions.js';
+
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
-import { searchImages } from './js/pixabay-api.js';
-import { renderImages } from './js/render-functions.js';
+const formEl = document.querySelector('.form');
+const inputEl = formEl.querySelector('input[name="search-text"]');
 
-//-------------------------------------------------------------------------------------------------
+formEl.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-const searchForm = document.querySelector('.search-form');
-const searchInput = document.querySelector('.search-input');
-const loader = document.querySelector('.loader');
-const backdrop = document.querySelector('.backdrop');
-
-//-------------------------------------------------------------------------------------------------
-
-searchForm.addEventListener('submit', handleSubmit);
-
-function handleSubmit(event) {
-  event.preventDefault();
-  gallery.innerHTML = ''; // Очищуєм галерею перед додаванням нових зображ.
-
-  const query = searchInput.value.trim();
-  if (query === '') {
+  const query = inputEl.value.trim();
+  if (!query) {
+    iziToast.error({
+      title: 'Error',
+      message: 'Please enter a search term',
+      position: 'topRight',
+    });
     return;
   }
 
-  loader.classList.remove('hidden');
-  backdrop.classList.remove('hidden');
+  clearGallery();
+  showLoader();
 
-  searchImages(query)
-    .then(images => {
-      if (images.hits.length === 0) {
-        iziToast.error({
-          title: 'Error',
-          message:
-            'Sorry, there are no images matching your search query. Please try again!',
-          position: 'topRight',
-          timeout: 5000,
-        });
-      } else {
-        renderImages(images.hits);
-      }
+  try {
+    const data = await getImagesByQuery(query);
 
-      loader.classList.add('hidden');
-      backdrop.classList.add('hidden');
-    })
-    .catch(error => {
-      console.log(error);
+    if (!data.hits || data.hits.length === 0) {
+      iziToast.info({
+        title: 'No results',
+        message: 'Sorry, there are no images matching your search query. Please try again!',
+        position: 'topRight',
+      });
+      return;
+    }
+
+    createGallery(data.hits);
+  } catch (error) {
+    iziToast.error({
+      title: 'Error',
+      message: `Failed to fetch images: ${error.message}`,
+      position: 'topRight',
     });
-  searchForm.reset();
-}
-
-// // testing
-// searchImages('pug')
-//   .then(images => {
-//     const markup = renderImages(images.hits);
-//     console.log(markup);
-//   })
-//   .catch(error => console.log(error));
+  } finally {
+    hideLoader();
+  }
+});

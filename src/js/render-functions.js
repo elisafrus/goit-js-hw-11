@@ -1,41 +1,47 @@
-//*функція для відображення картинок
-
-import SimpleLightbox from 'simplelightbox'; //
+import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
-const gallery = document.querySelector('.gallery');
-const lightbox = new SimpleLightbox('.gallery a', {});
+const galleryEl = document.querySelector('.gallery');
 
-// відображення картинок---------------------------------------------------------------------
-export const renderImages = images => {
+const lightbox = new SimpleLightbox('.gallery a', {
+  captionsData: 'alt',
+  captionDelay: 250,
+});
+
+export function createGallery(images) {
   const markup = images
-    .map(
-      ({
-        webformatURL,
-        largeImageURL,
-        tags,
-        likes,
-        views,
-        comments,
-        downloads,
-      }) => `
-      <div class='card'>
-      <a class="card-item" href="${largeImageURL}">
-        <img class="card-image" src="${webformatURL}" alt="${tags}" loading="lazy" />
-        <div class="card-info">
+    .map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) => {
+      return `
+        <li>
+        <a href="${largeImageURL}">
+          <img src="${webformatURL}" alt="${tags}" loading="lazy" />
+        </a>
+        <div class="info">
           <p><b>Likes:</b> ${likes}</p>
           <p><b>Views:</b> ${views}</p>
           <p><b>Comments:</b> ${comments}</p>
           <p><b>Downloads:</b> ${downloads}</p>
         </div>
-      </a>
-      </div>
-
-    `
-    )
+      </li>`
+    ;})
     .join('');
 
-  gallery.insertAdjacentHTML('beforeend', markup);
-
+  galleryEl.insertAdjacentHTML('beforeend', markup);
   lightbox.refresh();
-};
+}
+
+
+export function clearGallery() {
+  galleryEl.innerHTML = '';
+}
+
+
+export function showLoader() {
+  document.getElementById('loader').classList.remove('loader-hidden');
+}
+
+
+export function hideLoader() {
+  document.getElementById('loader').classList.add('loader-hidden');
+}
+
